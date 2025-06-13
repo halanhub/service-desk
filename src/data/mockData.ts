@@ -127,6 +127,78 @@ export const mockAssets: Asset[] = [
     purchaseDate: new Date('2023-11-10'),
     warrantyExpiry: new Date('2026-11-10'),
     cost: 2499.99
+  },
+  {
+    id: 'AST-004',
+    name: 'Dell UltraSharp U2720Q',
+    type: 'Monitor',
+    category: 'Hardware',
+    manufacturer: 'Dell',
+    model: 'UltraSharp U2720Q',
+    serialNumber: 'DLU2720Q001',
+    status: 'in-use',
+    assignedTo: mockUsers[2],
+    location: 'Office Floor 2',
+    purchaseDate: new Date('2024-03-15'),
+    warrantyExpiry: new Date('2027-03-15'),
+    cost: 549.99
+  },
+  {
+    id: 'AST-005',
+    name: 'Dell WD19TB Docking Station',
+    type: 'Docking Station',
+    category: 'Hardware',
+    manufacturer: 'Dell',
+    model: 'WD19TB',
+    serialNumber: 'DLWD19TB001',
+    status: 'in-use',
+    assignedTo: mockUsers[2],
+    location: 'Office Floor 2',
+    purchaseDate: new Date('2024-03-15'),
+    warrantyExpiry: new Date('2027-03-15'),
+    cost: 299.99
+  },
+  {
+    id: 'AST-006',
+    name: 'HP LaserJet Pro M404n',
+    type: 'Printer',
+    category: 'Hardware',
+    manufacturer: 'HP',
+    model: 'LaserJet Pro M404n',
+    serialNumber: 'HPM404N001',
+    status: 'in-use',
+    location: 'Office Floor 2',
+    purchaseDate: new Date('2024-02-10'),
+    warrantyExpiry: new Date('2027-02-10'),
+    cost: 199.99
+  },
+  {
+    id: 'AST-007',
+    name: 'Dell PowerEdge R740',
+    type: 'Server',
+    category: 'Infrastructure',
+    manufacturer: 'Dell',
+    model: 'PowerEdge R740',
+    serialNumber: 'DLR740001',
+    status: 'in-use',
+    location: 'Server Room A',
+    purchaseDate: new Date('2023-08-15'),
+    warrantyExpiry: new Date('2026-08-15'),
+    cost: 4999.99
+  },
+  {
+    id: 'AST-008',
+    name: 'Netgear ProSAFE GS724T',
+    type: 'Switch',
+    category: 'Infrastructure',
+    manufacturer: 'Netgear',
+    model: 'ProSAFE GS724T',
+    serialNumber: 'NTGS724T001',
+    status: 'in-use',
+    location: 'Server Room B',
+    purchaseDate: new Date('2023-12-05'),
+    warrantyExpiry: new Date('2026-12-05'),
+    cost: 399.99
   }
 ];
 

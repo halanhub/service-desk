@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, MoreHorizontal, User, Mail, Shield } from 'lucide-react';
-import { useUsers } from '../hooks/useData';
+import { Plus, Search, Filter, MoreHorizontal, User, Mail, Shield, Monitor, Laptop, Printer, HardDrive } from 'lucide-react';
+import { useUsers, useAssets } from '../hooks/useData';
 import { User as UserType } from '../types';
 
 const roleColors = {
@@ -16,9 +16,11 @@ const statusColors = {
 
 export const Users: React.FC = () => {
   const { users, loading, addUser } = useUsers();
+  const { assets } = useAssets();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [filterRole, setFilterRole] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'users' | 'workstation'>('users');
 
   const filteredUsers = users.filter(user => {
     const matchesRole = filterRole === 'all' || user.role === filterRole;
@@ -26,6 +28,27 @@ export const Users: React.FC = () => {
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesRole && matchesSearch;
   });
+
+  const getUserAssets = (userId: string) => {
+    return assets.filter(asset => asset.assignedTo?.id === userId);
+  };
+
+  const getAssetIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'laptop':
+        return Laptop;
+      case 'desktop':
+        return Monitor;
+      case 'monitor':
+        return Monitor;
+      case 'printer':
+        return Printer;
+      case 'docking station':
+        return HardDrive;
+      default:
+        return HardDrive;
+    }
+  };
 
   const handleCreateUser = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -75,10 +98,28 @@ export const Users: React.FC = () => {
             <option value="user">User</option>
           </select>
           
-          <button className="flex items-center space-x-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
-            <Filter className="w-4 h-4" />
-            <span>More Filters</span>
-          </button>
+          <div className="flex items-center space-x-2 border border-slate-300 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('users')}
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                viewMode === 'users' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-slate-600 hover:text-slate-800'
+              }`}
+            >
+              Users
+            </button>
+            <button
+              onClick={() => setViewMode('workstation')}
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                viewMode === 'workstation' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-slate-600 hover:text-slate-800'
+              }`}
+            >
+              Work-station
+            </button>
+          </div>
         </div>
         
         <button
@@ -90,57 +131,163 @@ export const Users: React.FC = () => {
         </button>
       </div>
 
-      {/* Users Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredUsers.map((user) => (
-          <div key={user.id} className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-white" />
+      {/* Users View */}
+      {viewMode === 'users' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredUsers.map((user) => (
+            <div key={user.id} className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900">{user.name}</h3>
+                    <p className="text-sm text-slate-600">{user.department}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900">{user.name}</h3>
-                  <p className="text-sm text-slate-600">{user.department}</p>
-                </div>
-              </div>
-              <button className="p-1 text-slate-400 hover:text-slate-600 transition-colors">
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 text-slate-500" />
-                <span className="text-sm text-slate-900">{user.email}</span>
+                <button className="p-1 text-slate-400 hover:text-slate-600 transition-colors">
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
               </div>
               
-              <div className="flex items-center justify-between">
+              <div className="space-y-3">
                 <div className="flex items-center space-x-2">
-                  <Shield className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-600">Role</span>
+                  <Mail className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm text-slate-900">{user.email}</span>
                 </div>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleColors[user.role]}`}>
-                  {user.role}
-                </span>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Shield className="w-4 h-4 text-slate-500" />
+                    <span className="text-sm text-slate-600">Role</span>
+                  </div>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${roleColors[user.role]}`}>
+                    {user.role}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Status</span>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[user.status]}`}>
+                    {user.status}
+                  </span>
+                </div>
               </div>
               
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Status</span>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[user.status]}`}>
-                  {user.status}
-                </span>
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <button className="w-full py-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                  View Profile
+                </button>
               </div>
             </div>
+          ))}
+        </div>
+      )}
+
+      {/* Work-station View */}
+      {viewMode === 'workstation' && (
+        <div className="space-y-6">
+          {filteredUsers.map((user) => {
+            const userAssets = getUserAssets(user.id);
             
-            <div className="mt-4 pt-4 border-t border-slate-200">
-              <button className="w-full py-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                View Profile
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+            return (
+              <div key={user.id} className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                      <User className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">{user.name}</h3>
+                      <div className="flex items-center space-x-4 text-sm text-slate-600">
+                        <span>{user.department}</span>
+                        <span>•</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${roleColors[user.role]}`}>
+                          {user.role}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <div className="text-sm text-slate-600">Assets Assigned</div>
+                    <div className="text-2xl font-bold text-slate-900">{userAssets.length}</div>
+                  </div>
+                </div>
+                
+                {userAssets.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {userAssets.map((asset) => {
+                      const AssetIcon = getAssetIcon(asset.type);
+                      
+                      return (
+                        <div key={asset.id} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                          <div className="flex items-start space-x-3">
+                            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                              <AssetIcon className="w-5 h-5 text-slate-700" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-slate-900 text-sm truncate">{asset.name}</h4>
+                              <p className="text-xs text-slate-600">{asset.type}</p>
+                              <p className="text-xs text-slate-500 mt-1">{asset.serialNumber}</p>
+                              
+                              <div className="flex items-center justify-between mt-2">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  asset.status === 'in-use' ? 'bg-emerald-100 text-emerald-800' :
+                                  asset.status === 'available' ? 'bg-blue-100 text-blue-800' :
+                                  asset.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-slate-100 text-slate-800'
+                                }`}>
+                                  {asset.status.replace('-', ' ')}
+                                </span>
+                                <span className="text-xs text-slate-500">{asset.location}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
+                    <Monitor className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                    <p className="text-slate-500">No assets assigned to this user</p>
+                    <button className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium">
+                      Assign Assets
+                    </button>
+                  </div>
+                )}
+                
+                {userAssets.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-slate-200">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-lg font-semibold text-slate-900">
+                          {userAssets.filter(a => a.status === 'in-use').length}
+                        </div>
+                        <div className="text-xs text-slate-600">In Use</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-slate-900">
+                          {userAssets.filter(a => a.status === 'maintenance').length}
+                        </div>
+                        <div className="text-xs text-slate-600">Maintenance</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-slate-900">
+                          ${userAssets.reduce((sum, asset) => sum + asset.cost, 0).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-slate-600">Total Value</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Create User Modal */}
       {showCreateForm && (

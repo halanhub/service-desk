@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, MoreHorizontal, Package, User, Calendar, Edit, Save, X } from 'lucide-react';
+import { Plus, Search, Filter, MoreHorizontal, Package, User, Calendar, Edit, Save, X, Monitor, Laptop, Wifi, Server, Printer, HardDrive } from 'lucide-react';
 import { useAssets, useUsers } from '../hooks/useData';
 import { Asset } from '../types';
 
@@ -10,6 +10,15 @@ const statusColors = {
   'retired': 'bg-slate-100 text-slate-800'
 };
 
+const assetCategories = [
+  { id: 'computers', name: 'Computers', icon: Laptop, color: 'bg-blue-50 border-blue-200' },
+  { id: 'monitors', name: 'Monitors', icon: Monitor, color: 'bg-purple-50 border-purple-200' },
+  { id: 'docking-station', name: 'Docking Stations', icon: HardDrive, color: 'bg-green-50 border-green-200' },
+  { id: 'network', name: 'Network', icon: Wifi, color: 'bg-orange-50 border-orange-200' },
+  { id: 'server', name: 'Servers', icon: Server, color: 'bg-red-50 border-red-200' },
+  { id: 'printers', name: 'Printers', icon: Printer, color: 'bg-yellow-50 border-yellow-200' }
+];
+
 export const Assets: React.FC = () => {
   const { assets, loading, addAsset, updateAsset } = useAssets();
   const { users } = useUsers();
@@ -17,14 +26,37 @@ export const Assets: React.FC = () => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'categories'>('categories');
+
+  const getCategoryFromType = (type: string): string => {
+    const typeMap: Record<string, string> = {
+      'Laptop': 'computers',
+      'Desktop': 'computers',
+      'Monitor': 'monitors',
+      'Docking Station': 'docking-station',
+      'Network Equipment': 'network',
+      'Switch': 'network',
+      'Router': 'network',
+      'Server': 'server',
+      'Printer': 'printers'
+    };
+    return typeMap[type] || 'computers';
+  };
 
   const filteredAssets = assets.filter(asset => {
     const matchesStatus = filterStatus === 'all' || asset.status === filterStatus;
+    const assetCategory = getCategoryFromType(asset.type);
+    const matchesCategory = filterCategory === 'all' || assetCategory === filterCategory;
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesCategory && matchesSearch;
   });
+
+  const getAssetsByCategory = (categoryId: string) => {
+    return filteredAssets.filter(asset => getCategoryFromType(asset.type) === categoryId);
+  };
 
   const handleCreateAsset = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -116,11 +148,40 @@ export const Assets: React.FC = () => {
             <option value="maintenance">Maintenance</option>
             <option value="retired">Retired</option>
           </select>
+
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Categories</option>
+            {assetCategories.map(category => (
+              <option key={category.id} value={category.id}>{category.name}</option>
+            ))}
+          </select>
           
-          <button className="flex items-center space-x-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
-            <Filter className="w-4 h-4" />
-            <span>More Filters</span>
-          </button>
+          <div className="flex items-center space-x-2 border border-slate-300 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('categories')}
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                viewMode === 'categories' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-slate-600 hover:text-slate-800'
+              }`}
+            >
+              Categories
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                viewMode === 'grid' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-slate-600 hover:text-slate-800'
+              }`}
+            >
+              Grid
+            </button>
+          </div>
         </div>
         
         <button
@@ -132,105 +193,200 @@ export const Assets: React.FC = () => {
         </button>
       </div>
 
-      {/* Assets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAssets.map((asset) => (
-          <div key={asset.id} className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900">{asset.name}</h3>
-                  <p className="text-sm text-slate-600">{asset.id}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => openEditModal(asset)}
-                  className="p-1 text-slate-400 hover:text-blue-600 transition-colors"
-                  title="Edit Asset"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button className="p-1 text-slate-400 hover:text-slate-600 transition-colors">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+      {/* Category View */}
+      {viewMode === 'categories' && (
+        <div className="space-y-8">
+          {assetCategories.map((category) => {
+            const categoryAssets = getAssetsByCategory(category.id);
+            const Icon = category.icon;
             
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Status</span>
-                <select
-                  value={asset.status}
-                  onChange={(e) => handleStatusChange(asset.id, e.target.value as any)}
-                  className={`text-xs font-medium px-2.5 py-0.5 rounded-full border-0 focus:ring-2 focus:ring-blue-500 ${statusColors[asset.status]}`}
-                >
-                  <option value="available">Available</option>
-                  <option value="in-use">In Use</option>
-                  <option value="maintenance">Maintenance</option>
-                  <option value="retired">Retired</option>
-                </select>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Type</span>
-                <span className="text-sm font-medium text-slate-900">{asset.type}</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Manufacturer</span>
-                <span className="text-sm font-medium text-slate-900">{asset.manufacturer}</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Serial Number</span>
-                <span className="text-sm font-mono text-slate-900">{asset.serialNumber}</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Location</span>
-                <span className="text-sm font-medium text-slate-900">{asset.location}</span>
-              </div>
-              
-              {asset.assignedTo && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Assigned To</span>
-                  <div className="flex items-center space-x-1">
-                    <User className="w-3 h-3 text-slate-500" />
-                    <span className="text-sm font-medium text-slate-900">{asset.assignedTo.name}</span>
+            if (categoryAssets.length === 0 && filterCategory === 'all') return null;
+            
+            return (
+              <div key={category.id} className={`border-2 border-dashed rounded-xl p-6 ${category.color}`}>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                      <Icon className="w-5 h-5 text-slate-700" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">{category.name}</h3>
+                      <p className="text-sm text-slate-600">{categoryAssets.length} assets</p>
+                    </div>
                   </div>
                 </div>
-              )}
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Purchase Date</span>
+                
+                {categoryAssets.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {categoryAssets.map((asset) => (
+                      <div key={asset.id} className="bg-white rounded-lg p-4 border border-slate-200 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <Package className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-slate-900 text-sm">{asset.name}</h4>
+                              <p className="text-xs text-slate-600">{asset.id}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => openEditModal(asset)}
+                            className="p-1 text-slate-400 hover:text-blue-600 transition-colors"
+                            title="Edit Asset"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </button>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-600">Status</span>
+                            <select
+                              value={asset.status}
+                              onChange={(e) => handleStatusChange(asset.id, e.target.value as any)}
+                              className={`text-xs font-medium px-2 py-0.5 rounded-full border-0 focus:ring-1 focus:ring-blue-500 ${statusColors[asset.status]}`}
+                            >
+                              <option value="available">Available</option>
+                              <option value="in-use">In Use</option>
+                              <option value="maintenance">Maintenance</option>
+                              <option value="retired">Retired</option>
+                            </select>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-600">Model</span>
+                            <span className="font-medium text-slate-900">{asset.model}</span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-600">Serial</span>
+                            <span className="font-mono text-slate-900">{asset.serialNumber}</span>
+                          </div>
+                          
+                          {asset.assignedTo && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-600">Assigned</span>
+                              <span className="font-medium text-slate-900">{asset.assignedTo.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Icon className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                    <p className="text-slate-500">No {category.name.toLowerCase()} found</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Grid View */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredAssets.map((asset) => (
+            <div key={asset.id} className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg transition-shadow">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Package className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900">{asset.name}</h3>
+                    <p className="text-sm text-slate-600">{asset.id}</p>
+                  </div>
+                </div>
                 <div className="flex items-center space-x-1">
-                  <Calendar className="w-3 h-3 text-slate-500" />
-                  <span className="text-sm text-slate-900">{asset.purchaseDate.toLocaleDateString()}</span>
+                  <button
+                    onClick={() => openEditModal(asset)}
+                    className="p-1 text-slate-400 hover:text-blue-600 transition-colors"
+                    title="Edit Asset"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button className="p-1 text-slate-400 hover:text-slate-600 transition-colors">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
               
-              {asset.warrantyExpiry && (
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Warranty Expires</span>
+                  <span className="text-sm text-slate-600">Status</span>
+                  <select
+                    value={asset.status}
+                    onChange={(e) => handleStatusChange(asset.id, e.target.value as any)}
+                    className={`text-xs font-medium px-2.5 py-0.5 rounded-full border-0 focus:ring-2 focus:ring-blue-500 ${statusColors[asset.status]}`}
+                  >
+                    <option value="available">Available</option>
+                    <option value="in-use">In Use</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="retired">Retired</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Type</span>
+                  <span className="text-sm font-medium text-slate-900">{asset.type}</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Manufacturer</span>
+                  <span className="text-sm font-medium text-slate-900">{asset.manufacturer}</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Serial Number</span>
+                  <span className="text-sm font-mono text-slate-900">{asset.serialNumber}</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Location</span>
+                  <span className="text-sm font-medium text-slate-900">{asset.location}</span>
+                </div>
+                
+                {asset.assignedTo && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">Assigned To</span>
+                    <div className="flex items-center space-x-1">
+                      <User className="w-3 h-3 text-slate-500" />
+                      <span className="text-sm font-medium text-slate-900">{asset.assignedTo.name}</span>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Purchase Date</span>
                   <div className="flex items-center space-x-1">
                     <Calendar className="w-3 h-3 text-slate-500" />
-                    <span className="text-sm text-slate-900">{asset.warrantyExpiry.toLocaleDateString()}</span>
+                    <span className="text-sm text-slate-900">{asset.purchaseDate.toLocaleDateString()}</span>
                   </div>
                 </div>
-              )}
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Cost</span>
-                <span className="text-sm font-semibold text-slate-900">${asset.cost.toLocaleString()}</span>
+                
+                {asset.warrantyExpiry && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">Warranty Expires</span>
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="w-3 h-3 text-slate-500" />
+                      <span className="text-sm text-slate-900">{asset.warrantyExpiry.toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Cost</span>
+                  <span className="text-sm font-semibold text-slate-900">${asset.cost.toLocaleString()}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Create Asset Modal */}
       {showCreateForm && (
@@ -265,9 +421,12 @@ export const Assets: React.FC = () => {
                     <option value="Laptop">Laptop</option>
                     <option value="Desktop">Desktop</option>
                     <option value="Monitor">Monitor</option>
-                    <option value="Printer">Printer</option>
+                    <option value="Docking Station">Docking Station</option>
                     <option value="Network Equipment">Network Equipment</option>
-                    <option value="Mobile Device">Mobile Device</option>
+                    <option value="Switch">Switch</option>
+                    <option value="Router">Router</option>
+                    <option value="Server">Server</option>
+                    <option value="Printer">Printer</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
@@ -445,9 +604,12 @@ export const Assets: React.FC = () => {
                     <option value="Laptop">Laptop</option>
                     <option value="Desktop">Desktop</option>
                     <option value="Monitor">Monitor</option>
-                    <option value="Printer">Printer</option>
+                    <option value="Docking Station">Docking Station</option>
                     <option value="Network Equipment">Network Equipment</option>
-                    <option value="Mobile Device">Mobile Device</option>
+                    <option value="Switch">Switch</option>
+                    <option value="Router">Router</option>
+                    <option value="Server">Server</option>
+                    <option value="Printer">Printer</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
